@@ -31,9 +31,9 @@
     // Autres projections : geoMercator, geoNaturalEarth1, ...
     // https://github.com/d3/d3-geo/blob/master/README.md
     var projection = d3
-      .geoAlbersUsa()
-      .translate([width / 2, height / 2])
-      .scale([500]);
+      .geoConicConformal()
+      .center([2.454071, 46.279229])
+      .scale(2800);
 
     // On definie une echelle de couleur
     // via https://observablehq.com/@d3/color-schemes?collection=@d3/d3-scale-chromatic
@@ -42,36 +42,36 @@
       .range(["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"]);
 
     var path = d3.geoPath().projection(projection);
-
+    var jourChoisi = "2021-09-12";
     // Chargement des donnees
-    d3.csv("data/departements-version-simplifiee.geojson.txt").then(function (data) {
+    d3.csv("covid-06-11-2021.csv").then(function (data) {
+      var cleanData = data.filter(function (row) {
+        return row.sexe == 0; // Ne garder que les lignes où 'sexe' est égal à 0
+      });
       //Set input domain for color scale
       color.domain([
-        d3.min(data, function (d) {
+        d3.min(cleanData, function (d) {
           return d.value;
         }),
-        d3.max(data, function (d) {
+        d3.max(cleanData, function (d) {
           return d.value;
         })
       ]);
 
-      d3.json("us-states2.json").then(function (json) {
+      d3.json("departements-version-simplifiee.geojson").then(function (json) {
         //On fusionne les donnees avec le GeoJSON
-        for (var i = 0; i < data.length; i++) {
+        for (var i = 0; i < cleanData.length; i++) {
           //Nom de l'etat
-          var dataState = data[i].state;
+          var dataState = cleanData[i].state;
           console.log(dataState);
-
           //Valeur associee a l'etat
-          var dataValue = parseFloat(data[i].value);
-
+          var dataValue = parseInt(cleanData[i].hosp);
           //Recherche de l'etat dans le GeoJSON
           for (var j = 0; j < json.features.length; j++) {
             var jsonState = json.features[j].properties.name;
             if (dataState == jsonState) {
               //On injecte la valeur de l'Etat dans le json
               json.features[j].properties.value = dataValue;
-
               //Pas besoin de chercher plus loin
               break;
             }
